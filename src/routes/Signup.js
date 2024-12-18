@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// import cloneDeep from "lodash/cloneDeep";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
@@ -85,50 +86,102 @@ const InputId = styled.input`
 `;
 
 function Signup(){
-    const [userId, setUserId] = useState("");
-    const [userPw, setUserPw] = useState("");
-    const [userPwRe, setUserPwRe] = useState("");
-    const [userNm, setUserNm] = useState("");
-    const [userEmail, setUserEmail] = useState("");
+    const [form, setForm] = useState({
+        userId: '',
+        userPw: '',
+        userPwRe: '',
+        userNm: '',
+        userEmail: '',
+    });
+    const [idchkYn, setIdChkYn] = useState("N");
     
     const navigate = useNavigate();
 
     const backBtn = (e) => {
         navigate("/signIn");
     }
-    const signUpBtn = (e) => {
-        e.target.focus = true;
-    }
-    const idCkeck = async (e) => {
-        let jsonData = {
-            "userId" : userId,
+    const signUpBtn = async (e) => {
+
+        if(idchkYn !== "Y"){
+            alert("ID 체크를 진행해주세요.");
+            return;   
         }
-        await axios
-            .post("http://localhost:8099/airplane/signidchk", jsonData)
-            .then((resp) => {
-                console.log(resp.data);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
+        if(    form.userId === "" || form.userPw === "" 
+            || form.userPwRe === "" || form.userNm === "" 
+            || form.userEmail === ""){
+            alert("회원가입 정보를 입력해주세요.");
+            return;
+        }
+        if(form.userPw !== form.userPwRe){
+            alert("비밀번호 정보를 확인해주세요.");
+            return;
+        }
+
+
+        let reqUrl = "http://localhost:8099/airplane/signup";
+        let reqData = {
+            userId: form.userId,
+            userPw: form.userPw,
+            userPwRe: form.userPwRe,
+            userNm: form.userNm,
+            userEmail: form.userEmail,
+        }
+        try{
+            const resp = await axios.post(reqUrl, reqData);
+            console.log(resp);
+            if(resp.status === 200){
+                if(resp.data.resultCode === "APSU-000"){
+                    alert("회원가입 성공");
+                    navigate("/signIn");
+                }
+                if(resp.data.resultCode === "APIC-100"){
+                    alert("이미 사용중인 ID 입니다.");
+                    setIdChkYn("N");
+                }
+            }
+        }catch(error){
+            console.log(error);
+            alert(error.message);
+        }
+    }
+
+    const idCkeck = async (e) => {
+        let reqUrl = "http://localhost:8099/airplane/signidchk";
+        let reqData = {userId: form.userId}
+        try{
+            const resp = await axios.post(reqUrl, reqData);
+            console.log(resp);
+            if(resp.status === 200){
+                if(resp.data.resultCode === "APIC-000"){
+                    setIdChkYn("Y");
+                    alert("사용가능한 ID 입니다.");
+                }else if(resp.data.resultCode === "APIC-100"){
+                    alert("이미 사용중인 ID 입니다.");
+                }
+            }
+        }catch(error){
+            console.log(error);
+            alert(error.message);
+        }
     }
     
     const inputValueChange = (e) => {
         switch(e.target.id){
             case "userId":
-                setUserId(e.target.value);
+                setForm({...form, userId: e.target.value});
+                setIdChkYn("N");
             break;
             case "userPw":
-                setUserPw(e.target.value);
+                setForm({...form, userPw: e.target.value});
             break;
             case "userPwRe":
-                setUserPwRe(e.target.value);
+                setForm({...form, userPwRe: e.target.value});
             break;
             case "userNm":
-                setUserNm(e.target.value);
+                setForm({...form, userNm: e.target.value});
             break;
             case "userEmail":
-                setUserEmail(e.target.value);
+                setForm({...form, userEmail: e.target.value});
             break;
             default:
             break;
@@ -145,25 +198,25 @@ function Signup(){
                             <Tr>
                                 <Td><Span>ID</Span></Td>
                                 <Td>
-                                    <InputId type="text" id="userId" value={userId} onChange={inputValueChange} />
+                                    <InputId type="text" id="userId" value={form.userId} onChange={inputValueChange} required />
                                     <ButtonChk onClick={idCkeck}>ID 체크</ButtonChk>
                                 </Td>
                             </Tr>
                             <Tr>
                                 <Td><Span>PASSWORD</Span></Td>
-                                <Td><Input type="password" id="userPw" value={userPw} onChange={inputValueChange} /></Td>
+                                <Td><Input type="password" id="userPw" value={form.userPw} onChange={inputValueChange} required /></Td>
                             </Tr>
                             <Tr>
                                 <Td><Span>PASSWORD RE</Span></Td>
-                                <Td><Input type="password" id="userPwRe" value={userPwRe} onChange={inputValueChange} /></Td>
+                                <Td><Input type="password" id="userPwRe" value={form.userPwRe} onChange={inputValueChange} required /></Td>
                             </Tr>
                             <Tr>
                                 <Td><Span>NAME</Span></Td>
-                                <Td><Input type="text" id="userNm" value={userNm} onChange={inputValueChange} /></Td>
+                                <Td><Input type="text" id="userNm" value={form.userNm} onChange={inputValueChange} required /></Td>
                             </Tr>
                             <Tr>
                                 <Td><Span>EAMIL</Span></Td>
-                                <Td><Input type="text" id="userEmail" value={userEmail} onChange={inputValueChange} /></Td>
+                                <Td><Input type="text" id="userEmail" value={form.userEmail} onChange={inputValueChange} required /></Td>
                             </Tr>
                         </Tbody>
                     </Table>

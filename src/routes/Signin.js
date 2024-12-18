@@ -60,24 +60,33 @@ const Input = styled.input`
 
 
 function Signin(){
-    const [userId, setUserId] = useState("");
-    const [userPw, setUserPw] = useState("");
+    const [form, setForm] = useState({
+        userId: '',
+        userPw: '',
+    });
     const navigate = useNavigate();
 
     const signInBtn = async (e) => {
-        if(userId !== "" &&  userPw !== ""){
-            let jsonData = {
-                "userId" : userId,
-                "userPw" : userPw,
+        if(form.userId !== "" &&  form.userPw !== ""){
+            let reqUrl = "http://localhost:8099/airplane/signin";
+            let reqData = {
+                userId: form.userId,
+                userPw: form.userPw,
             }
-            await axios
-                .post("http://localhost:8099/airplane/signin", jsonData)
-                .then((resp) => {
-                    console.log(resp.data);
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
+            try{
+                const resp = await axios.post(reqUrl, reqData);
+                console.log("resp : ", resp);
+                if(resp.status === 200){
+                    if(resp.data.resultCode === "APSI-000"){
+                        sessionStorage.setItem("accessToken", resp.data.accessToken);
+                        navigate("/main");
+                    }else{
+                        alert("로그인 정보가 일치하지 않습니다.");
+                    }
+                }
+            }catch(error){
+                alert("로그인 실패");
+            }
         }else{
             alert("로그인 정보를 입력해주세요.");
         }
@@ -89,10 +98,10 @@ function Signin(){
     const inputValueChange = (e) => {
         switch(e.target.id){
             case "userId":
-                setUserId(e.target.value);
+                setForm({...form, userId: e.target.value});
             break;
             case "userPw":
-                setUserPw(e.target.value);
+                setForm({...form, userPw: e.target.value});
             break;
             default:
             break;
@@ -108,11 +117,11 @@ function Signin(){
                         <Tbody>
                             <Tr>
                                 <Td><Span>ID</Span></Td>
-                                <Td><Input type="text" id="userId" value={userId} onChange={inputValueChange} /></Td>
+                                <Td><Input type="text" id="userId" value={form.userId} onChange={inputValueChange} required /></Td>
                             </Tr>
                             <Tr>
                                 <Td><Span>PASSWORD</Span></Td>
-                                <Td><Input type="password" id="userPw" value={userPw} onChange={inputValueChange} /></Td>
+                                <Td><Input type="password" id="userPw" value={form.userPw} onChange={inputValueChange} required /></Td>
                             </Tr>
                         </Tbody>
                     </Table>
