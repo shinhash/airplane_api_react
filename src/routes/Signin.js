@@ -74,7 +74,7 @@ function Signin(){
                 userPw: form.userPw,
             }
             try{
-                const resp = await axios.post(reqUrl, reqData);
+                const resp = await axios.post(reqUrl, reqData, { withCredentials: true });
                 console.log("resp : ", resp);
                 if(resp.status === 200){
                     if(resp.data.resultCode === "APSI-000"){
@@ -92,7 +92,7 @@ function Signin(){
         }
     }
     const signUpBtn = (e) => {
-        navigate("/signup")
+        navigate("/signup");
     }
     
     const inputValueChange = (e) => {
